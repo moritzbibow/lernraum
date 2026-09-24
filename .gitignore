@@ -26,3 +26,6 @@ coverage/
 # misc
 .DS_Store
 npm-debug.log*
+
+# e2e test database
+.e2e-data/

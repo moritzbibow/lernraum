@@ -1,0 +1,38 @@
+# Lernraum behind the existing Traefik of the n8n setup on the VPS.
+# Values come from .env (created by scripts/setup-vps.sh).
+name: lernraum
+
+services:
+  app:
+    build: .
+    image: lernraum:latest
+    container_name: lernraum
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_PATH: /data/lernraum.db
+    volumes:
+      # Database + nightly backups live in ./data on the host (easy to copy/restore).
+      - ./data:/data
+    ports:
+      # Only reachable from the VPS itself – for diagnostics (curl 127.0.0.1:3100/api/health).
+      - "127.0.0.1:${LERNRAUM_LOCAL_PORT:-3100}:3000"
+    networks:
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK}
+      - traefik.http.routers.lernraum.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.lernraum.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
+      - traefik.http.routers.lernraum.tls=true
+      - traefik.http.routers.lernraum.tls.certresolver=${TRAEFIK_CERTRESOLVER:-mytlschallenge}
+      - traefik.http.routers.lernraum.middlewares=lernraum-headers
+      - traefik.http.middlewares.lernraum-headers.headers.stsSeconds=31536000
+      - traefik.http.middlewares.lernraum-headers.headers.stsIncludeSubdomains=true
+      - traefik.http.services.lernraum.loadbalancer.server.port=3000
+
+networks:
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK}

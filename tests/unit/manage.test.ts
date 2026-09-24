@@ -82,7 +82,8 @@ describe('library management', () => {
     renameItem({ kind: 'page', id: c.pageId }, 'Past Perfect vs. Simple Past')
     expect(pageUrl(loadLibrary(), c.pageId)).toBe('/f/englisch/grammatik/past-perfect-vs-simple-past')
     deleteItems([{ kind: 'page', id: c.pageId }])
-    expect(purgeDeleted(0)).toBeGreaterThanOrEqual(1)
+    // Negative age = cutoff in the future, so the purge doesn't depend on the clock resolution.
+    expect(purgeDeleted(-1)).toBeGreaterThanOrEqual(1)
   })
 })
 

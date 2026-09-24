@@ -83,7 +83,8 @@ describe('progress & dashboard', () => {
     // Progress only grows.
     expect(updateTopicProgress(r.pageId, { superkompensation: 0.1 })).toBeCloseTo(0.65)
     const d = getDashboard()
-    expect(d.continueCard?.mainTitle).toBe('Trainingsprinzipien')
+    // Soft hyphen at the compound joint ("Trainings-prinzipien" in the narrow tile)
+    expect(d.continueCard?.mainTitle).toBe('Trainings\u00adprinzipien')
     expect(d.continueCard?.pathLabel).toBe('Sporttheorie › Stunde 4')
     expect(d.continueCard?.topics).toEqual([
       { title: 'Superkompensation', done: true },

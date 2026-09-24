@@ -15,19 +15,19 @@ type Handle = { db: DB; sqlite: Database.Database; file: string }
 const g = globalThis as unknown as { __lernraumDb?: Handle }
 
 export function databasePath(): string {
-  return process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'lernraum.db')
+  return process.env.DATABASE_PATH || path.join(/*turbopackIgnore: true*/ process.cwd(), 'data', 'lernraum.db')
 }
 
 function migrationsFolder(): string {
-  const candidates = [process.env.MIGRATIONS_PATH, path.join(process.cwd(), 'drizzle')]
+  const candidates = [process.env.MIGRATIONS_PATH, path.join(/*turbopackIgnore: true*/ process.cwd(), 'drizzle')]
   for (const dir of candidates) {
-    if (dir && fs.existsSync(path.join(dir, 'meta', '_journal.json'))) return dir
+    if (dir && fs.existsSync(/*turbopackIgnore: true*/ path.join(dir, 'meta', '_journal.json'))) return dir
   }
   throw new Error('Migrationsordner "drizzle/" nicht gefunden (MIGRATIONS_PATH setzen).')
 }
 
 function open(file: string): Handle {
-  if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true })
+  if (file !== ':memory:') fs.mkdirSync(/*turbopackIgnore: true*/ path.dirname(file), { recursive: true })
   const sqlite = new Database(file)
   sqlite.pragma('journal_mode = WAL')
   sqlite.pragma('foreign_keys = ON')

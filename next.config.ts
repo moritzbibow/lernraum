@@ -11,6 +11,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // Never bundle local data (dev databases, backups) into the server output.
+  outputFileTracingExcludes: { '*': ['./data/**'] },
   poweredByHeader: false,
   devIndicators: { position: 'bottom-right' },
   async headers() {

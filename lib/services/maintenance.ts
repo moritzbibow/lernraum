@@ -22,16 +22,16 @@ export function getMeta(key: string): string | null {
 /** Online backup of the SQLite database (safe while the app is running). */
 export async function createBackup(): Promise<string> {
   const dir = backupDir()
-  fs.mkdirSync(dir, { recursive: true })
+  fs.mkdirSync(/*turbopackIgnore: true*/ dir, { recursive: true })
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
   const file = path.join(dir, `lernraum-${stamp}.db`)
   await getSqlite().backup(file)
   const files = fs
-    .readdirSync(dir)
+    .readdirSync(/*turbopackIgnore: true*/ dir)
     .filter((f) => /^lernraum-.*\.db$/.test(f))
     .sort()
   for (const old of files.slice(0, Math.max(0, files.length - KEEP_BACKUPS))) {
-    fs.rmSync(path.join(dir, old), { force: true })
+    fs.rmSync(/*turbopackIgnore: true*/ path.join(dir, old), { force: true })
   }
   setMeta('lastBackupAt', String(Date.now()))
   return file
