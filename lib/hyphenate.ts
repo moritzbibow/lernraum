@@ -8,9 +8,10 @@ const JOINT = /(ings|ungs|heits|keits|schafts|ions|täts|tions|lings|ens)$/i
 /**
  * Inserts soft hyphens into long German words for large display titles
  * ("Trainings­prinzipien"). Break points leaving fewer than 5 letters on
- * either side are dropped so lines never end in short fragments.
+ * either side are dropped so lines never end in short fragments. With
+ * `jointsOnly`, words are only split at compound joints (for wide headings).
  */
-export function softHyphenate(text: string): string {
+export function softHyphenate(text: string, opts: { jointsOnly?: boolean } = {}): string {
   if (!text) return text
   let out: string
   try {
@@ -31,7 +32,8 @@ export function softHyphenate(text: string): string {
     }
     // Prefer compound joints ("Trainings|prinzipien", "Leistungs|fähigkeit").
     const joint = candidates.filter((i) => JOINT.test(parts.slice(0, i).join('')))
-    const keep = new Set(joint.length ? joint : candidates)
+    // Wide headings only break at compound joints; narrow tiles may use syllables.
+    const keep = new Set(joint.length || opts.jointsOnly ? joint : candidates)
     return parts.map((p, i) => (i > 0 && keep.has(i) ? SHY + p : p)).join('')
   })
 }

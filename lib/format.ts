@@ -18,12 +18,13 @@ export function formatLongDate(ts: number): string {
   return new Intl.DateTimeFormat('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }).format(ts)
 }
 
-/** "Do, 24. Sept." */
+const MONTHS_SHORT = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.']
+const WEEKDAYS_SHORT = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
+
+/** "Do, 24. Sept." (Duden abbreviations, independent of the ICU version) */
 export function formatShortDate(ts: number): string {
   const d = new Date(ts)
-  const weekday = new Intl.DateTimeFormat('de-DE', { weekday: 'short' }).format(d).replace('.', '')
-  const month = new Intl.DateTimeFormat('de-DE', { month: 'short' }).format(d)
-  return `${weekday}, ${d.getDate()}. ${month}${month.endsWith('.') ? '' : '.'}`
+  return `${WEEKDAYS_SHORT[d.getDay()]}, ${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`
 }
 
 export function greeting(ts: number): string {

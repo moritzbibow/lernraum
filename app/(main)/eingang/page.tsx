@@ -4,7 +4,6 @@ import styles from '@/components/lists/Lists.module.css'
 import { markAllSeenAction } from '@/lib/actions/library'
 import { formatAge, formatDayGroup, serverNow } from '@/lib/format'
 import { listInbox, unseenCount } from '@/lib/services/inbox'
-import { splitTitle } from '@/lib/text'
 
 export const metadata: Metadata = { title: 'Eingang' }
 
@@ -61,7 +60,8 @@ export default function InboxPage() {
             {list.map((item) => {
               const isQuiz = item.kind === 'quiz'
               const title = isQuiz && item.questionCount ? `${item.title} – ${item.questionCount} Fragen` : item.title
-              const sub = isQuiz ? `an ${splitTitle(item.pageTitle ?? '').short} · ${item.path}` : item.path
+              const parentPath = item.path.split(' › ').slice(0, -1).join(' › ')
+              const sub = isQuiz ? `an ${item.pageTitle ?? ''} · ${parentPath}` : item.path
               return (
                 <Link key={item.id} href={item.url} className={`${styles.row} ${item.seen ? '' : styles.unseen}`}>
                   <span className={`${styles.type} ${isQuiz ? styles.quiz : ''}`}>{isQuiz ? 'Quiz' : 'Lernseite'}</span>

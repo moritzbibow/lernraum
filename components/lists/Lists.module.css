@@ -383,6 +383,7 @@ a.row:hover,
   min-width: 0;
 }
 .copyValue {
+  font-variant-ligatures: none;
   flex: 1;
   min-width: 0;
   font-family: 'JetBrains Mono', monospace;

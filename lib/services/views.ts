@@ -139,7 +139,7 @@ export function getPageViewById(pageId: string, lib: Library = loadLibrary()): P
   return {
     id: row.id,
     title: row.title,
-    heading: softHyphenate(row.heading || splitTitle(row.title).main),
+    heading: softHyphenate(row.heading || splitTitle(row.title).main, { jointsOnly: true }),
     kicker: computeKicker(row, parentLabel && subject && parent ? `${subject.name} · ${parent.title}` : parentLabel),
     url: pageUrl(lib, pageId) ?? '/',
     contentMd: row.contentMd,

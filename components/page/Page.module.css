@@ -295,7 +295,7 @@
 .childBar span {
   display: block;
   height: 100%;
-  background: var(--accent);
+  background: var(--subject, var(--accent));
 }
 .childFolder {
   color: var(--dim);
@@ -317,6 +317,9 @@
     padding: 14px 18px;
   }
   .crumbFar {
+    display: none;
+  }
+  .crumbFar + .crumb:not(.crumbFar) > .crumbSep {
     display: none;
   }
   .article,

@@ -15,6 +15,6 @@ export default async function PlayQuizPage({ params }: Props) {
   const quiz = getQuizDetail((await params).id)
   if (!quiz) notFound()
   // Long German words in the 42px question get soft hyphens.
-  const prepared = { ...quiz, questions: quiz.questions.map((q) => ({ ...q, prompt: softHyphenate(q.prompt) })) }
+  const prepared = { ...quiz, questions: quiz.questions.map((q) => ({ ...q, prompt: softHyphenate(q.prompt, { jointsOnly: true }) })) }
   return <QuizPlayer quiz={prepared} />
 }
