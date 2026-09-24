@@ -63,12 +63,16 @@ describe('markdown pipeline', () => {
     expect(html).toContain('target="_blank"')
   })
 
+  it('uses ASCII topic ids with transliterated umlauts', () => {
+    expect(renderMarkdown('## Individualität\n\n## Überblick').topics.map((t) => t.id)).toEqual(['individualitaet', 'ueberblick'])
+  })
+
   it('analyzes topics and word count identically to rendering', () => {
     const md = '## Eins\n\nDrei Wörter hier.\n\n## Eins\n\nNoch was.'
     const a = analyzeMarkdown(md)
     const r = renderMarkdown(md)
     expect(a.topics).toEqual(r.topics)
-    expect(a.topics.map((t) => t.id)).toEqual(['eins', 'eins-1'])
+    expect(a.topics.map((t) => t.id)).toEqual(['eins', 'eins-2'])
     expect(a.wordCount).toBeGreaterThan(4)
   })
 })

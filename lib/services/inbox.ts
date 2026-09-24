@@ -1,6 +1,6 @@
-import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { getDb, type Tx } from '../db/client'
-import { inboxItems, questions, quizzes } from '../db/schema'
+import { inboxItems, quizzes } from '../db/schema'
 import { newId } from '../ids'
 import { loadLibrary, pagePathLabel, pageUrl, type Library } from './library'
 import { quizPlayUrl } from './urls'
@@ -63,7 +63,7 @@ export type InboxEntry = {
 export function listInbox(opts: { limit?: number; lib?: Library } = {}, tx: Tx = getDb()): InboxEntry[] {
   const { limit = 100 } = opts
   const lib = opts.lib ?? loadLibrary(tx)
-  const rows = tx.select().from(inboxItems).orderBy(desc(inboxItems.createdAt)).limit(limit * 2).all()
+  const rows = tx.select().from(inboxItems).orderBy(desc(inboxItems.createdAt), asc(inboxItems.kind)).limit(limit * 2).all()
 
   const quizIds = rows.filter((r) => r.kind === 'quiz').map((r) => r.refId)
   const quizRows = quizIds.length

@@ -9,6 +9,7 @@ import {
   normalizeQuestions,
   parseOrThrow,
   ingestInput,
+  quizInput,
   type IngestInput,
   type NormalizedQuestion,
   type QuizInput,
@@ -345,3 +346,28 @@ export function assertQuizAlive(tx: Tx, quizId: string) {
   if (!row) throw new NotFoundError('Quiz nicht gefunden.')
 }
 
+
+/** Replaces title/questions of an existing quiz (REST PATCH, MCP ingest_quiz by quiz_id). */
+export function replaceQuiz(quizId: string, raw: unknown, opts: { source?: 'claude' | 'manual' } = {}) {
+  const input = parseOrThrow(quizInput, raw, 'Ungültiges Quiz.')
+  const db = getDb()
+  const now = Date.now()
+  return db.transaction((tx) => {
+    const quiz = tx
+      .select({ id: quizzes.id, pageId: quizzes.pageId, title: quizzes.title })
+      .from(quizzes)
+      .where(and(eq(quizzes.id, quizId), isNull(quizzes.deletedAt)))
+      .get()
+    if (!quiz) throw new NotFoundError('Quiz nicht gefunden.')
+    const page = tx.select({ topics: pages.topics }).from(pages).where(eq(pages.id, quiz.pageId)).get()
+    const normalized = normalizeQuestions(input.questions)
+    tx.delete(questions).where(eq(questions.quizId, quizId)).run()
+    insertQuestions(tx, quizId, normalized, page?.topics ?? [])
+    tx.update(quizzes)
+      .set({ title: input.title?.trim() || quiz.title, updatedAt: now, source: opts.source ?? 'claude' })
+      .where(eq(quizzes.id, quizId))
+      .run()
+    addInboxItem(tx, 'quiz', quizId, 'updated', now)
+    return { ok: true as const, quizId, questionCount: normalized.length, quizUrl: quizPlayUrl(quizId) }
+  })
+}

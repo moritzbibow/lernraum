@@ -34,15 +34,17 @@ export function findSibling(siblings: SiblingRow[], title: string): SiblingRow |
 }
 
 /**
- * Position for a new sibling. If the existing siblings are in natural title
- * order ("Stunde 1, 2, 3 …"), the new page is inserted at its natural place so
- * that late additions still line up; otherwise it is appended.
+ * Position for a new sibling. Numbered series that are in natural order
+ * ("Stunde 1, 2, 3 …") get the new page at its natural place so late additions
+ * still line up; everything else is appended in creation order.
  */
 export function placeNewSibling(tx: Tx, siblings: SiblingRow[], title: string): number {
   if (siblings.length === 0) return 0
   const ordered = [...siblings].sort((a, b) => a.sort - b.sort)
-  const natural = ordered.every((s, i) => i === 0 || naturalCompare(ordered[i - 1].title, s.title) <= 0)
   const last = ordered[ordered.length - 1]
+  // Only numbered series ("Stunde 3", "Kapitel 2") are kept in natural order.
+  const numbered = /\d/.test(title) && ordered.every((s) => /\d/.test(s.title))
+  const natural = numbered && ordered.every((s, i) => i === 0 || naturalCompare(ordered[i - 1].title, s.title) <= 0)
   if (!natural) return last.sort + 1
   const index = ordered.findIndex((s) => naturalCompare(title, s.title) < 0)
   if (index === -1) return last.sort + 1

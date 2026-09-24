@@ -1,4 +1,3 @@
-import GithubSlugger from 'github-slugger'
 import type { Element, ElementContent, Root as HastRoot } from 'hast'
 import type { Heading, Paragraph, PhrasingContent, Root as MdRoot, RootContent, Text } from 'mdast'
 import { toString } from 'mdast-util-to-string'
@@ -14,6 +13,7 @@ import { unified, type Plugin } from 'unified'
 import { SKIP, visit } from 'unist-util-visit'
 import type { VFile } from 'vfile'
 import type { Topic } from '../db/schema'
+import { slugify } from '../slug'
 import { countWords } from '../text'
 import { resolveBlock } from './blocks'
 
@@ -54,9 +54,20 @@ function directiveToText(node: DirectiveNode): PhrasingContent[] {
   return [text(`${marker}${node.name}[`), ...children, text(']')]
 }
 
+/** Sequential slugger: "Eins", "Eins" → "eins", "eins-2" (ASCII, umlauts transliterated). */
+function createSlugger() {
+  const used = new Map<string, number>()
+  return (title: string, fallback: string) => {
+    const base = slugify(title) === 'seite' && !/seite/i.test(title) ? fallback : slugify(title)
+    const n = (used.get(base) ?? 0) + 1
+    used.set(base, n)
+    return n === 1 ? base : `${base}-${n}`
+  }
+}
+
 function slugTopics(titles: string[]): Topic[] {
-  const slugger = new GithubSlugger()
-  return titles.map((title) => ({ id: slugger.slug(title) || 'thema', title }))
+  const slug = createSlugger()
+  return titles.map((title) => ({ id: slug(title, 'thema'), title }))
 }
 
 /** mdast transform: headings, custom blocks, mermaid, stray directives. */
@@ -160,7 +171,7 @@ const remarkLernraum: Plugin<[], MdRoot> = () => (tree: MdRoot, file: VFile) => 
 const rehypeLernraum: Plugin<[], HastRoot> = () => (tree: HastRoot, file: VFile) => {
   const data = file.data as Partial<FileData>
   const topics = data.topics ?? []
-  const subSlugger = new GithubSlugger()
+  const subSlug = createSlugger()
   let h2Index = 0
 
   visit(tree, 'element', (node: Element, index, parent) => {
@@ -181,7 +192,7 @@ const rehypeLernraum: Plugin<[], HastRoot> = () => (tree: HastRoot, file: VFile)
     }
     if (node.tagName === 'h3') {
       const title = node.children.map((c) => ('value' in c ? String(c.value) : '')).join('')
-      node.properties = { ...node.properties, id: `s-${subSlugger.slug(title) || 'abschnitt'}` }
+      node.properties = { ...node.properties, id: `s-${subSlug(title, 'abschnitt')}` }
       return
     }
     if (node.tagName === 'table' && parent && index !== undefined) {

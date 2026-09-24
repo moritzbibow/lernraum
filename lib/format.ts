@@ -1,5 +1,10 @@
 /** German date/time helpers. The server runs with TZ=Europe/Berlin. */
 
+/** Request time for server components (kept out of render bodies for lint purity). */
+export function serverNow(): number {
+  return Date.now()
+}
+
 const DAY = 24 * 60 * 60 * 1000
 
 function startOfDay(ts: number): number {

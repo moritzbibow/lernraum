@@ -1,0 +1,58 @@
+.dialog {
+  padding: 0;
+  border: 1px solid var(--l-10);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-float);
+  max-height: calc(100vh - 48px);
+}
+.dialog::backdrop {
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+}
+.dialog[open] {
+  animation: modal-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 22px 22px 18px;
+  max-height: calc(100vh - 50px);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.kicker {
+  color: var(--dim);
+}
+.title {
+  font-size: 28px;
+  line-height: 1.05;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow: auto;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@keyframes modal-in {
+  from {
+    transform: translateY(6px) scale(0.99);
+    opacity: 0;
+  }
+}

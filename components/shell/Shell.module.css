@@ -1,0 +1,462 @@
+/* ------------------------------------------------------------ app shell */
+
+.shell {
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --------------------------------------------------------------- sidebar */
+
+.sidebar {
+  /* 268px content + 2×18px padding + 1px border, as rendered in the design */
+  width: 305px;
+  flex: none;
+  border-right: 1px solid var(--l-07);
+  padding: 26px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 6px;
+  align-self: flex-start;
+}
+.logoDot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-fill);
+  flex: none;
+}
+.logoText {
+  font-size: 25px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--l-08);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: var(--dim);
+  transition: border-color 120ms ease;
+}
+.search:hover {
+  border-color: var(--l-14);
+}
+.searchIcon {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1.5px solid var(--muted-2);
+  flex: none;
+}
+.searchKbd {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 10.5px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 14px;
+}
+.navItem {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--muted);
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.navItem:hover {
+  background: var(--l-04);
+  color: var(--text);
+}
+.navActive,
+.navActive:hover {
+  background: var(--l-07);
+  font-weight: 600;
+  color: var(--text);
+}
+.badge {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  font-size: 10.5px;
+  line-height: 1.35;
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+
+.library {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 13.5px;
+  flex: 1;
+  min-height: 0;
+}
+.libHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--dim-2);
+  padding: 0 10px 10px;
+}
+.libAdd {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--dim-2);
+  width: 20px;
+  height: 20px;
+  margin: -4px -5px -4px 0;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+}
+.libAdd:hover {
+  background: var(--l-06);
+  color: var(--text);
+}
+
+.treeScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0 -8px;
+  padding: 0 8px 8px;
+}
+.treeEmpty {
+  padding: 6px 10px 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--dim);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.rowLink {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.ellipsis {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chev {
+  flex: none;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--dim);
+  padding: 4px 6px;
+  margin-right: 4px;
+  border-radius: 5px;
+}
+.chev:hover {
+  color: var(--text);
+  background: var(--l-06);
+}
+
+/* Subject rows (level 0) */
+.subject {
+  border-radius: 8px;
+  color: var(--text-2);
+  transition: background-color 120ms ease;
+}
+.subject .rowLink {
+  padding: 7px 10px;
+}
+.subject:hover {
+  background: var(--l-04);
+}
+.subjectOpen {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Level 1 (e.g. "Sporttheorie") */
+.level1 {
+  border-radius: 8px;
+  color: var(--muted);
+  transition: background-color 120ms ease;
+}
+.level1 .rowLink {
+  padding: 6px 10px 6px 26px;
+  gap: 6px;
+}
+.level1:hover {
+  background: var(--l-04);
+  color: var(--text);
+}
+.level1Open {
+  color: var(--text-2);
+}
+.level1Active,
+.level1Active:hover {
+  color: var(--text);
+  font-weight: 600;
+  background: var(--l-05);
+}
+
+/* Leaf column ("Stunde 1 …") */
+.leafCol {
+  margin-left: 34px;
+  border-left: 1px solid var(--l-10);
+  display: flex;
+  flex-direction: column;
+}
+.nested {
+  margin-left: 12px;
+}
+.nested .leafCol {
+  margin-left: 0;
+}
+.leaf {
+  color: var(--muted-2);
+  transition: color 120ms ease;
+  border-left: 2px solid transparent;
+  margin-left: -1px;
+}
+.leaf .rowLink {
+  padding: 5px 12px 5px 11px;
+  gap: 6px;
+}
+.leaf:hover {
+  color: var(--text);
+}
+.leafActive {
+  color: var(--text);
+  border-left-color: var(--accent);
+  background: var(--l-05);
+  font-weight: 600;
+}
+/* On the overview: the page you were last reading (screen 2a) */
+.leafCurrent {
+  color: var(--text);
+  border-left-color: var(--accent);
+  background: var(--l-04);
+}
+
+.new {
+  flex: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 9.5px;
+  color: var(--accent-text);
+}
+
+.general {
+  color: var(--muted-2);
+  border-top: 1px solid var(--l-07);
+  margin-top: 8px;
+  padding-top: 5px;
+}
+.general .rowLink {
+  padding: 7px 10px;
+}
+.general:hover .rowLink {
+  color: var(--text);
+}
+.generalActive {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Theme row + switch */
+.themeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 10px 0;
+  border-top: 1px solid var(--l-07);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex: none;
+  border-radius: 20px;
+  background: var(--l-14);
+  transition: background-color 150ms ease;
+}
+.toggle[aria-checked='true'] {
+  background: var(--accent-fill);
+}
+.knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 180ms cubic-bezier(0.3, 0.7, 0.2, 1), background-color 150ms ease;
+}
+.toggle[aria-checked='true'] .knob {
+  transform: translateX(18px);
+  background: #131211;
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------- icon rail */
+
+.rail {
+  width: 73px;
+  flex: none;
+  border-right: 1px solid var(--l-07);
+  padding: 26px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+}
+.railLogo {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-fill);
+}
+.railIcons {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.railBtn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: var(--dim);
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.railBtn:hover {
+  background: var(--l-04);
+  color: var(--text);
+}
+.railActive,
+.railActive:hover {
+  background: var(--l-07);
+  color: var(--text);
+}
+.railBadge {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-fill);
+}
+.railBottom {
+  margin-top: auto;
+}
+
+/* ------------------------------------------------------------ mobile nav */
+
+.mobileNav {
+  display: none;
+}
+.mCount {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}
+
+@media (max-width: 899px) {
+  .sidebar,
+  .rail {
+    display: none;
+  }
+  .main {
+    padding-bottom: 104px;
+  }
+  .mobileNav {
+    display: flex;
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: calc(22px + env(safe-area-inset-bottom));
+    z-index: 50;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface-2);
+    border-radius: 40px;
+    padding: 6px;
+    box-shadow: 0 14px 34px -12px rgba(0, 0, 0, 0.55);
+    border: 1px solid var(--l-05);
+  }
+  .mItem {
+    flex: 1;
+    text-align: center;
+    padding: 11px 0;
+    border-radius: 30px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .mActive {
+    background: var(--inverse);
+    color: var(--on-inverse);
+    font-weight: 600;
+  }
+}

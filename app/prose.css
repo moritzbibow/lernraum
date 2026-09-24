@@ -1,0 +1,347 @@
+/* =====================================================================
+   Rendered learning-page content (HTML from lib/content/markdown.ts).
+   Values follow screen 3a: 16px/1.7 body, serif H2 28px, 640px measure.
+   ===================================================================== */
+
+.prose {
+  --measure: 640px;
+  color: var(--text-2);
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-wrap: break-word;
+}
+
+.prose > * + * {
+  margin-top: 20px;
+}
+
+.prose > * {
+  max-width: var(--measure);
+}
+
+.prose p {
+  text-wrap: pretty;
+}
+
+.prose strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.prose a {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, var(--accent) 65%, transparent);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+.prose a:hover {
+  text-decoration-color: var(--accent);
+}
+
+/* Headings */
+.prose h2 {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.15;
+  color: var(--text);
+  max-width: none;
+  scroll-margin-top: 84px;
+}
+.prose > * + h2 {
+  margin-top: 30px;
+}
+.prose > h2:first-child {
+  margin-top: 14px;
+}
+.prose h3 {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--text);
+  scroll-margin-top: 84px;
+}
+.prose > * + h3 {
+  margin-top: 26px;
+}
+.prose h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.prose > h3 + *,
+.prose > h4 + * {
+  margin-top: 10px;
+}
+
+/* Lists */
+.prose ul,
+.prose ol {
+  padding-left: 22px;
+}
+.prose li + li {
+  margin-top: 6px;
+}
+.prose li::marker {
+  color: var(--dim);
+}
+.prose li > p + p {
+  margin-top: 8px;
+}
+.prose .contains-task-list {
+  list-style: none;
+  padding-left: 4px;
+}
+.prose .task-list-item input {
+  margin: 0 8px 0 0;
+  accent-color: var(--accent-fill);
+}
+
+/* Code */
+.prose code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.84em;
+  background: var(--surface-2);
+  border: 1px solid var(--l-06);
+  border-radius: 5px;
+  padding: 1px 5px;
+  color: var(--text);
+}
+.prose pre {
+  background: var(--surface);
+  border: 1px solid var(--l-07);
+  border-radius: 12px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.prose pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* Quotes & rules */
+.prose blockquote {
+  margin: 0;
+  border-left: 2px solid var(--l-14);
+  padding: 2px 0 2px 16px;
+  color: var(--text-2);
+}
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--l-07);
+  margin: 28px 0;
+}
+
+/* Tables */
+.prose .table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--l-07);
+  border-radius: 12px;
+}
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.prose th {
+  text-align: left;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 500;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim-2);
+  background: var(--sunken);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--l-06);
+  white-space: nowrap;
+}
+.prose td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--l-04);
+  vertical-align: top;
+  color: var(--text-2);
+}
+.prose tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Images */
+.prose img {
+  border-radius: 12px;
+  height: auto;
+}
+
+/* Math */
+.prose .katex {
+  font-size: 1.08em;
+  color: var(--text);
+}
+.prose .katex-display {
+  margin: 0;
+  padding: 4px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.prose .katex-display > .katex {
+  font-size: 1.18em;
+}
+
+/* ------------------------------------------------------------- callouts */
+
+.prose > .callout,
+.prose > .mermaid-block {
+  /* 640px content + padding + border, as rendered in the design */
+  max-width: calc(var(--measure) + 38px);
+}
+
+.prose .callout {
+  --tone: var(--tone-neutral);
+  --tone-label: var(--tone);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-radius: 14px;
+  padding: 16px 18px;
+  background: color-mix(in oklch, var(--tone) 10%, transparent);
+  border: 1px solid color-mix(in oklch, var(--tone) 28%, transparent);
+}
+.prose .callout--accent {
+  --tone: var(--tone-accent);
+  --tone-label: var(--accent-text);
+}
+.prose .callout--blue {
+  --tone: var(--tone-blue);
+}
+.prose .callout--violet {
+  --tone: var(--tone-violet);
+}
+.prose .callout--amber {
+  --tone: var(--tone-amber);
+}
+.prose .callout--danger {
+  --tone: var(--tone-danger);
+}
+.prose .callout--neutral {
+  background: var(--surface);
+  border-color: var(--l-07);
+  --tone-label: var(--dim);
+}
+
+.prose .callout__label {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tone-label);
+  line-height: 1.4;
+}
+.prose .callout__body {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.prose .callout__body > * + * {
+  margin-top: 8px;
+}
+.prose .callout__body ul,
+.prose .callout__body ol {
+  padding-left: 20px;
+}
+.prose .callout__source {
+  font-size: 13px;
+  color: var(--muted-2);
+}
+
+/* Quote */
+.prose .callout--quote .callout__body {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 22px;
+  line-height: 1.3;
+}
+
+/* Collapsible (details) */
+.prose details.callout {
+  gap: 0;
+}
+.prose details.callout > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+}
+.prose details.callout > summary::-webkit-details-marker {
+  display: none;
+}
+.prose details.callout > summary::before {
+  content: '▸';
+  font-size: 11px;
+  color: var(--dim);
+  transition: transform 150ms ease;
+}
+.prose details.callout[open] > summary::before {
+  transform: rotate(90deg);
+}
+.prose details.callout[open] > summary {
+  margin-bottom: 10px;
+}
+
+/* Mermaid – rendered in the browser (components/page/MermaidRenderer) */
+.prose .mermaid-block {
+  background: var(--surface);
+  border: 1px solid var(--l-07);
+  border-radius: 14px;
+  padding: 18px;
+  overflow-x: auto;
+  display: flex;
+  justify-content: center;
+  min-height: 80px;
+  white-space: pre;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  color: transparent;
+}
+.prose .mermaid-block[data-state='done'] {
+  color: inherit;
+  white-space: normal;
+}
+.prose .mermaid-block[data-state='error'] {
+  color: var(--muted);
+  justify-content: flex-start;
+}
+.prose .mermaid-block svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Footnotes */
+.prose .footnotes {
+  margin-top: 36px;
+  padding-top: 16px;
+  border-top: 1px solid var(--l-07);
+  font-size: 13.5px;
+  color: var(--muted);
+}
+.prose .footnotes ol {
+  padding-left: 18px;
+}
+.prose sup a {
+  text-decoration: none;
+  color: var(--accent-text);
+  font-size: 0.8em;
+}

@@ -1,7 +1,8 @@
 import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { getDb } from '../db/client'
-import { attempts, pages, questions, quizzes, type Topic } from '../db/schema'
+import { attempts, pages, quizzes, type Topic } from '../db/schema'
 import { formatLessonDate } from '../format'
+import { softHyphenate } from '../hyphenate'
 import { readingMinutes, splitTitle } from '../text'
 import { listInbox, type InboxEntry, unseenCount } from './inbox'
 import {
@@ -138,7 +139,7 @@ export function getPageViewById(pageId: string, lib: Library = loadLibrary()): P
   return {
     id: row.id,
     title: row.title,
-    heading: row.heading || splitTitle(row.title).main,
+    heading: softHyphenate(row.heading || splitTitle(row.title).main),
     kicker: computeKicker(row, parentLabel && subject && parent ? `${subject.name} · ${parent.title}` : parentLabel),
     url: pageUrl(lib, pageId) ?? '/',
     contentMd: row.contentMd,
@@ -255,7 +256,9 @@ export function getDashboard(): Dashboard {
     continueCard = {
       pageId: continuePage.id,
       title: continuePage.title,
-      mainTitle: continuePage.heading && continuePage.heading.length <= 28 ? continuePage.heading : splitTitle(continuePage.title).main,
+      mainTitle: softHyphenate(
+        continuePage.heading && continuePage.heading.length <= 28 ? continuePage.heading : splitTitle(continuePage.title).main,
+      ),
       subject: subjectInfo(subject),
       pathLabel: [...trail.slice(0, -1).map((p) => p.title), splitTitle(continuePage.title).short].join(' › '),
       url: pageUrl(lib, continuePage.id) ?? '/',
@@ -266,7 +269,8 @@ export function getDashboard(): Dashboard {
   }
 
   const used = new Set(continuePage ? [continuePage.id] : [])
-  const recentPages = [...opened, ...newest].filter((p) => {
+  // Prefer pages that are still unfinished ("zuletzt geöffnet" = worth continuing).
+  const recentPages = [...opened.filter((p) => p.readProgress < 0.999), ...opened, ...newest].filter((p) => {
     if (used.has(p.id)) return false
     used.add(p.id)
     return true
@@ -277,7 +281,7 @@ export function getDashboard(): Dashboard {
     const parent = trail.length > 1 ? trail[trail.length - 2] : null
     return {
       pageId: p.id,
-      title: p.heading && p.heading.length <= 40 ? p.heading : splitTitle(p.title).main,
+      title: softHyphenate(p.heading && p.heading.length <= 40 ? p.heading : splitTitle(p.title).main),
       label: [subject?.name ?? 'Allgemein', parent?.title].filter(Boolean).join(' › '),
       url: pageUrl(lib, p.id) ?? '/',
       progress: p.readProgress,

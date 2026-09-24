@@ -1,6 +1,6 @@
 import { and, isNull, sql } from 'drizzle-orm'
 import { getDb } from '../db/client'
-import { questions, quizzes } from '../db/schema'
+import { quizzes } from '../db/schema'
 import { unseenPageIds } from './inbox'
 import { childrenOf, loadLibrary, pageUrl, type Library, type PageLite } from './library'
 import { GENERAL_URL, subjectUrl } from './urls'
@@ -22,7 +22,12 @@ export type TreeNode = {
   children: TreeNode[]
 }
 
-export type LibraryTree = { subjects: TreeNode[]; general: TreeNode }
+export type LibraryTree = {
+  subjects: TreeNode[]
+  general: TreeNode
+  /** Most recently opened page – highlighted in the sidebar on the overview. */
+  focusId: string | null
+}
 
 type QuizStats = Map<string, { quizzes: number; questions: number }>
 
@@ -99,5 +104,9 @@ export function buildTree(lib: Library = loadLibrary()): LibraryTree {
     depth: 0,
     children: generalKids,
   }
-  return { subjects, general }
+  const focus = lib.pages
+    .filter((p) => p.hasContent && p.lastOpenedAt)
+    .sort((a, b) => (b.lastOpenedAt ?? 0) - (a.lastOpenedAt ?? 0))
+    .find((p) => p.readProgress < 0.999)
+  return { subjects, general, focusId: focus?.id ?? null }
 }
