@@ -1,16 +1,16 @@
-# Lernraum auf dem Hostinger-VPS (neben n8n)
+# Lernraum auf dem Hostinger-VPS (hinter Traefik)
 
-Der Lernraum läuft als eigener Docker-Container auf deinem VPS und hängt sich an den **Traefik** an, der mit der n8n-Vorlage bereits läuft. Traefik übernimmt Domain-Routing und HTTPS-Zertifikate – für n8n ändert sich nichts.
+Der Lernraum läuft als eigener Docker-Container auf deinem VPS und hängt sich an den **Traefik** an, der dort bereits läuft – egal ob aus der n8n-Vorlage oder als eigenes Traefik-Projekt. Traefik übernimmt Domain-Routing und HTTPS-Zertifikate – für deine anderen Apps ändert sich nichts.
 
 ```
-Internet ──► Traefik (aus der n8n-Vorlage, Ports 80/443, Let's Encrypt)
-               ├─► n8n            (wie bisher)
-               └─► lernraum:3000  (Next.js + SQLite, Daten in ./data)
+Internet ──► Traefik (Ports 80/443, Let's Encrypt)
+               ├─► deine anderen Apps  (wie bisher)
+               └─► lernraum:3000       (Next.js + SQLite, Daten in ./data)
 ```
 
 ## Voraussetzungen
 
-- Hostinger-VPS mit der n8n-Vorlage (Traefik läuft), SSH-Zugang als `root`
+- Hostinger-VPS mit Docker und laufendem Traefik (z. B. n8n-Vorlage), Zugang als `root` per SSH oder Browser-Terminal im hPanel
 - Eine (Sub-)Domain für den Lernraum, z. B. `lernraum.deine-domain.de`
 - 1 GB freier Speicher; der erste Build braucht ca. 1,5 GB RAM (bei KVM 1 ggf. Swap anlegen, siehe unten)
 
@@ -60,8 +60,10 @@ git clone git@github-lernraum:moritzbibow/lernraum.git
 
 Das Skript
 
-- erkennt den laufenden Traefik (Netzwerk, Entrypoint, Zertifikats-Resolver),
-- schlägt anhand der n8n-Domain eine Adresse vor (z. B. `lernraum.deine-domain.de`),
+- erkennt den laufenden Traefik samt Entrypoint und Zertifikats-Resolver:
+  - Traefik im **Host-Netzwerk** (eigenes Traefik-Projekt): Der Lernraum bekommt ein eigenes Docker-Netzwerk, Traefik erreicht ihn dort direkt.
+  - Traefik in einem **eigenen Docker-Netzwerk** (n8n-Vorlage): Der Lernraum tritt diesem Netzwerk zusätzlich bei (`TRAEFIK_NETWORK` + `COMPOSE_FILE` in `.env`).
+- schlägt anhand einer schon laufenden Domain eine Adresse vor (z. B. `lernraum.deine-domain.de`) und bricht ab, wenn die gewählte Domain schon von einem anderen Container verwendet wird,
 - fragt deinen Namen und ein Login-Passwort ab (leer lassen = zufällig erzeugen),
 - erzeugt `SESSION_SECRET` und `LERNRAUM_API_TOKEN`,
 - schreibt alles in `.env` (nur für root lesbar) und prüft den DNS-Eintrag.
@@ -69,10 +71,10 @@ Das Skript
 ## 4. Starten
 
 ```bash
-docker compose up -d --build
+./scripts/deploy.sh
 ```
 
-Der erste Build dauert 3–5 Minuten. Danach:
+Das Skript baut das Image (beim ersten Mal 3–5 Minuten), startet den Container und prüft am Ende, ob Traefik die Domain an den Lernraum weiterleitet und ob DNS und Zertifikat stimmen. Zusätzlich von Hand:
 
 ```bash
 docker compose ps                         # STATUS: healthy
@@ -100,7 +102,7 @@ cd /opt/lernraum
 ./scripts/deploy.sh
 ```
 
-Holt den neuesten Code (`git pull`), baut das Image, startet neu und wartet auf den Healthcheck. Deine Inhalte liegen in `./data` und bleiben erhalten. Inhalte von Claude brauchen **kein** Update – sie sind sofort online.
+Holt den neuesten Code (`git pull`) und führt dann die frisch geholte Fassung des Skripts aus: Image bauen, neu starten, auf den Healthcheck warten, Erreichbarkeit prüfen. Deine Inhalte liegen in `./data` und bleiben erhalten. Inhalte von Claude brauchen **kein** Update – sie sind sofort online.
 
 ## Backups
 
@@ -129,7 +131,8 @@ docker compose start app
 | `APP_USER_NAME` | Name für Begrüßung und Initialen |
 | `SESSION_SECRET` | Signatur der Login-Cookies (lang und zufällig) |
 | `LERNRAUM_API_TOKEN` | Bearer-Token für REST-API und Claude Code |
-| `TRAEFIK_NETWORK` / `TRAEFIK_ENTRYPOINT` / `TRAEFIK_CERTRESOLVER` | Anbindung an den n8n-Traefik (vom Setup-Skript erkannt) |
+| `TRAEFIK_ENTRYPOINT` / `TRAEFIK_CERTRESOLVER` | Namen von HTTPS-Entrypoint und Zertifikats-Resolver aus der Traefik-Konfiguration (vom Setup-Skript erkannt) |
+| `TRAEFIK_NETWORK` + `COMPOSE_FILE` | Nur wenn Traefik in einem eigenen Docker-Netzwerk läuft (n8n-Vorlage): Der Lernraum tritt diesem Netzwerk bei. Bei Traefik im Host-Netzwerk beide weglassen. |
 | `LERNRAUM_LOCAL_PORT` | Diagnose-Port auf 127.0.0.1 (Standard 3100) |
 | `MCP_URL_SECRET` | Notfall-Zugang für Claude ohne OAuth (siehe CLAUDE_VERBINDEN.md) |
 | `OAUTH_ALLOWED_REDIRECTS` | Zusätzliche erlaubte OAuth-Redirect-URIs |
@@ -142,16 +145,18 @@ Nach Änderungen an `.env`: `docker compose up -d`.
 | Symptom | Ursache / Lösung |
 |---|---|
 | `docker compose ps` zeigt `unhealthy` | `docker compose logs --tail=100 app` ansehen. Häufig: `SESSION_SECRET` fehlt oder `./data` ist nicht beschreibbar (`chown 1000:1000 data`). |
-| 404 von Traefik | Domain in `.env` stimmt nicht mit dem Aufruf überein oder falsches `TRAEFIK_NETWORK`. `docker network ls` und `docker inspect <traefik-container>` prüfen. |
+| `deploy.sh`: „Traefik leitet … nicht an den Lernraum weiter“ / 404 von Traefik | `TRAEFIK_ENTRYPOINT` passt nicht zum Namen des 443-Entrypoints in der Traefik-Konfiguration, oder Traefik liest keine Docker-Labels. Log: `docker logs <traefik-container> 2>&1 \| grep -i lernraum`. |
+| `deploy.sh`: „… wird schon von … verwendet“ | Ein anderer Container nutzt die Domain bereits. Eine andere Subdomain in `.env` eintragen (`DOMAIN` und `PUBLIC_URL`). |
+| *network … declared as external, but could not be found* | `TRAEFIK_NETWORK`/`COMPOSE_FILE` in `.env` zeigen auf ein Netzwerk, das es nicht gibt. `./scripts/setup-vps.sh` erneut ausführen – es erkennt die Traefik-Anbindung neu. |
 | Zertifikatsfehler | DNS zeigt noch nicht auf den VPS oder Port 443 ist in der Hostinger-Firewall gesperrt. Traefik-Logs: `docker logs <traefik-container> 2>&1 \| grep -i acme`. |
-| Traefik-Log: *nonexistent certificate resolver* | `TRAEFIK_CERTRESOLVER` in `.env` an den Namen aus der n8n-Konfiguration anpassen. |
-| Traefik-Log: *client version 1.24 is too old* | Docker ≥ 29 braucht Traefik ≥ v3.6 – im n8n-Compose das Traefik-Image aktualisieren (betrifft auch n8n). |
+| Traefik-Log: *nonexistent certificate resolver* | `TRAEFIK_CERTRESOLVER` in `.env` an den Namen aus der Traefik-Konfiguration anpassen. |
+| Traefik-Log: *client version 1.24 is too old* | Docker ≥ 29 braucht Traefik ≥ v3.6 – im Compose-File von Traefik das Image aktualisieren (betrifft alle Apps hinter Traefik). |
 | Build bricht mit „Killed“ ab | Zu wenig RAM → Swap anlegen: `fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile`. |
 | Login klappt, danach sofort wieder Login-Seite | `PUBLIC_URL` muss mit `https://` beginnen und der aufgerufenen Adresse entsprechen. |
 
 ## Ohne Traefik
 
-Falls n8n/Traefik irgendwann wegfällt, kann ein eigener Reverse-Proxy (z. B. Caddy) die HTTPS-Zertifikate übernehmen. Minimaler Caddy-Eintrag:
+Läuft kein Traefik (mehr), kann ein anderer Reverse-Proxy (z. B. Caddy) die HTTPS-Zertifikate übernehmen. Minimaler Caddy-Eintrag:
 
 ```
 lernraum.deine-domain.de {
@@ -159,4 +164,4 @@ lernraum.deine-domain.de {
 }
 ```
 
-(`LERNRAUM_LOCAL_PORT=3100` ist bereits auf dem Server gebunden; die Traefik-Labels und das externe Netzwerk in `docker-compose.yml` dann entfernen.)
+(`LERNRAUM_LOCAL_PORT=3100` ist bereits auf dem Server gebunden; die Traefik-Labels in `docker-compose.yml` dann entfernen. `deploy.sh` meldet am Ende eine fehlende Traefik-Weiterleitung – das ist in diesem Fall zu erwarten.)

@@ -39,13 +39,12 @@ Details: [Claude verbinden](docs/CLAUDE_VERBINDEN.md) · [Inhaltsformat](docs/CO
 
 ## Auf den Server bringen
 
-Hostinger-VPS mit bestehendem n8n/Traefik → **[docs/DEPLOY.md](docs/DEPLOY.md)**. Kurzfassung:
+Hostinger-VPS mit laufendem Traefik (z. B. n8n-Vorlage) → **[docs/DEPLOY.md](docs/DEPLOY.md)**. Kurzfassung:
 
 ```bash
 git clone https://github.com/moritzbibow/lernraum.git && cd lernraum
 ./scripts/setup-vps.sh          # erkennt Traefik, fragt Domain + Passwort, schreibt .env
-docker compose up -d --build    # startet den Lernraum hinter Traefik (HTTPS)
-./scripts/deploy.sh             # spätere Updates
+./scripts/deploy.sh             # baut, startet hinter Traefik (HTTPS) und prüft die Erreichbarkeit – auch für Updates
 ```
 
 ## Lokal entwickeln

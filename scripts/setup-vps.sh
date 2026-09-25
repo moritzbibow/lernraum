@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# Lernraum – Einrichtung auf dem VPS (neben dem bestehenden n8n/Traefik).
+# Lernraum – Einrichtung auf dem VPS (hinter dem Traefik, der dort schon läuft).
 #
 #   ./scripts/setup-vps.sh
 #
@@ -11,12 +11,8 @@
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. scripts/lib.sh
 
-bold() { printf '\033[1m%s\033[0m\n' "$*"; }
-info() { printf '  %s\n' "$*"; }
-warn() { printf '\033[33m  ! %s\033[0m\n' "$*"; }
-fail() { printf '\033[31m  ✗ %s\033[0m\n' "$*"; exit 1; }
-ok()   { printf '\033[32m  ✓ %s\033[0m\n' "$*"; }
 ask()  { # ask VAR "Frage" "Default"
   local __var=$1 __q=$2 __def=${3:-} __ans
   if [ -n "${!__var:-}" ]; then return; fi
@@ -32,35 +28,42 @@ docker info >/dev/null 2>&1 || fail "Docker läuft nicht oder keine Berechtigung
 ok "Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null) mit Compose"
 
 bold "2/5 Traefik erkennen"
-TRAEFIK_ID=$(docker ps --format '{{.ID}} {{.Image}} {{.Names}}' | awk 'tolower($2) ~ /traefik/ || tolower($3) ~ /traefik/ {print $1; exit}')
+TRAEFIK_ID=$(traefik_container)
 DETECTED_DOMAIN=""
 if [ -z "$TRAEFIK_ID" ]; then
   warn "Kein laufender Traefik-Container gefunden."
-  warn "Läuft n8n noch? Sonst siehe docs/DEPLOY.md, Abschnitt „Ohne Traefik“."
+  warn "Der Lernraum braucht einen Reverse-Proxy für Domain und HTTPS – siehe docs/DEPLOY.md, Abschnitt „Ohne Traefik“."
 else
   TRAEFIK_NAME=$(docker inspect -f '{{.Name}}' "$TRAEFIK_ID" | sed 's#^/##')
   ok "Traefik gefunden: $TRAEFIK_NAME"
   ARGS=$(docker inspect -f '{{range .Args}}{{println .}}{{end}}{{range .Config.Cmd}}{{println .}}{{end}}' "$TRAEFIK_ID" 2>/dev/null || true)
-  if [ -z "${TRAEFIK_NETWORK:-}" ]; then
+  if [ "$(docker inspect -f '{{.HostConfig.NetworkMode}}' "$TRAEFIK_ID")" = host ]; then
+    # Traefik im Host-Netzwerk erreicht Container in jedem Docker-Netzwerk direkt.
+    info "Traefik läuft im Host-Netzwerk – der Lernraum bekommt ein eigenes Netzwerk."
+  elif [ -z "${TRAEFIK_NETWORK:-}" ]; then
     TRAEFIK_NETWORK=$(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{println $k}}{{end}}' "$TRAEFIK_ID" | grep -vE '^(bridge|host|none)?$' | head -1 || true)
+    [ -n "$TRAEFIK_NETWORK" ] || warn "Traefik hängt nur im Standard-Netzwerk von Docker – TRAEFIK_NETWORK bitte von Hand in .env setzen."
   fi
   if [ -z "${TRAEFIK_CERTRESOLVER:-}" ]; then
     TRAEFIK_CERTRESOLVER=$(printf '%s\n' "$ARGS" | sed -nE 's/^--certificatesresolvers\.([^.=]+)\..*/\1/Ip' | head -1)
   fi
   if [ -z "${TRAEFIK_ENTRYPOINT:-}" ]; then
-    TRAEFIK_ENTRYPOINT=$(printf '%s\n' "$ARGS" | sed -nE 's/^--entrypoints\.([^.=]+)\.address=:?443$/\1/Ip' | head -1)
+    TRAEFIK_ENTRYPOINT=$(printf '%s\n' "$ARGS" | sed -nE 's#^--entrypoints\.([^.=]+)\.address=[^:]*:443(/tcp)?$#\1#Ip' | head -1)
   fi
-  # Domain des n8n-Containers als Vorschlag (lernraum.<domain>)
-  DETECTED_DOMAIN=$(docker ps -q | xargs -r docker inspect -f '{{range $k, $v := .Config.Labels}}{{$k}}={{$v}}{{println}}{{end}}' 2>/dev/null \
-    | sed -nE 's/^traefik\.http\.routers\.[^.]+\.rule=.*Host\(`([^`]+)`\).*/\1/p' | head -1)
+  # Domain eines anderen Containers als Vorschlag (lernraum.<domain>)
+  DETECTED_DOMAIN=$(other_router_rules | sed -nE 's/^[^ ]+ .*Host\(`([^`]+)`\).*/\1/p' | head -1)
 fi
-TRAEFIK_NETWORK=${TRAEFIK_NETWORK:-root_default}
+TRAEFIK_NETWORK=${TRAEFIK_NETWORK:-}
 TRAEFIK_CERTRESOLVER=${TRAEFIK_CERTRESOLVER:-mytlschallenge}
 TRAEFIK_ENTRYPOINT=${TRAEFIK_ENTRYPOINT:-websecure}
-info "Netzwerk:      $TRAEFIK_NETWORK"
+if [ -n "$TRAEFIK_NETWORK" ]; then
+  info "Netzwerk:      $TRAEFIK_NETWORK"
+  docker network inspect "$TRAEFIK_NETWORK" >/dev/null 2>&1 || warn "Netzwerk $TRAEFIK_NETWORK existiert nicht – bitte in .env korrigieren."
+else
+  info "Netzwerk:      eigenes (lernraum_default)"
+fi
 info "Entrypoint:    $TRAEFIK_ENTRYPOINT"
 info "Cert-Resolver: $TRAEFIK_CERTRESOLVER"
-docker network inspect "$TRAEFIK_NETWORK" >/dev/null 2>&1 || warn "Netzwerk $TRAEFIK_NETWORK existiert nicht – bitte in .env korrigieren."
 
 bold "3/5 Adresse und Zugang"
 SUGGEST=""
@@ -68,10 +71,12 @@ if [ -n "$DETECTED_DOMAIN" ]; then
   BASE_DOMAIN=${DETECTED_DOMAIN#*.}
   [[ "$BASE_DOMAIN" == *.* ]] || BASE_DOMAIN=$DETECTED_DOMAIN
   SUGGEST="lernraum.$BASE_DOMAIN"
-  info "(n8n läuft unter $DETECTED_DOMAIN)"
+  info "(auf diesem Server läuft schon $DETECTED_DOMAIN)"
 fi
 ask DOMAIN "Domain für den Lernraum" "$SUGGEST"
 [ -n "$DOMAIN" ] || fail "Domain ist erforderlich."
+USERS=$(domain_users "$DOMAIN")
+[ -z "$USERS" ] || fail "$DOMAIN wird schon von $(echo $USERS) verwendet – bitte eine andere (Sub-)Domain wählen."
 ask APP_USER_NAME "Dein Name (Begrüßung, Initialen)" "Moritz Bibow"
 if [ -z "${APP_PASSWORD:-}" ]; then
   read -r -s -p "  Login-Passwort (leer = zufällig erzeugen): " APP_PASSWORD || true
@@ -86,18 +91,23 @@ if [ -f .env ] && [ -z "${FORCE:-}" ]; then
   cp .env ".env.backup-$(date +%Y%m%d-%H%M%S)"
 fi
 umask 177
-cat > .env <<ENV
+{
+  cat <<ENV
 DOMAIN=$DOMAIN
 PUBLIC_URL=https://$DOMAIN
 APP_PASSWORD=$APP_PASSWORD
 APP_USER_NAME=$APP_USER_NAME
 SESSION_SECRET=$(rand 64)
 LERNRAUM_API_TOKEN=lr_$(rand 40)
-TRAEFIK_NETWORK=$TRAEFIK_NETWORK
 TRAEFIK_ENTRYPOINT=$TRAEFIK_ENTRYPOINT
 TRAEFIK_CERTRESOLVER=$TRAEFIK_CERTRESOLVER
 TZ=Europe/Berlin
 ENV
+  if [ -n "$TRAEFIK_NETWORK" ]; then
+    # Traefik im eigenen Docker-Netzwerk: der Lernraum tritt diesem Netzwerk zusätzlich bei.
+    printf 'TRAEFIK_NETWORK=%s\nCOMPOSE_FILE=docker-compose.yml:docker-compose.traefik-net.yml\n' "$TRAEFIK_NETWORK"
+  fi
+} > .env
 umask 022
 mkdir -p data
 chown 1000:1000 data 2>/dev/null || warn "Konnte ./data nicht an UID 1000 übergeben – ggf. mit sudo: chown 1000:1000 data"
@@ -105,8 +115,8 @@ ok ".env geschrieben (nur für den Eigentümer lesbar)"
 if [ -n "${GENERATED_PW:-}" ]; then info "Erzeugtes Login-Passwort: $APP_PASSWORD  (steht in .env)"; fi
 
 bold "5/5 DNS prüfen"
-SERVER_IP=$( (curl -fsS --max-time 5 https://api.ipify.org 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}') || true)
-DNS_IP=$( (getent ahostsv4 "$DOMAIN" 2>/dev/null | awk 'NR==1{print $1}') || true)
+SERVER_IP=$(server_ip)
+DNS_IP=$(dns_ip "$DOMAIN")
 if [ -z "$DNS_IP" ]; then
   warn "$DOMAIN löst noch nicht auf. A-Record auf ${SERVER_IP:-die VPS-IP} setzen (siehe docs/DEPLOY.md)."
 elif [ -n "$SERVER_IP" ] && [ "$DNS_IP" != "$SERVER_IP" ]; then
@@ -117,5 +127,5 @@ fi
 
 echo
 bold "Fertig. Starten mit:"
-info "docker compose up -d --build"
+info "./scripts/deploy.sh"
 info "Danach: https://$DOMAIN  (Zertifikat holt Traefik automatisch, kann 1–2 Minuten dauern)"

@@ -1,0 +1,15 @@
+# Only for a Traefik that runs in its own Docker network (e.g. the n8n template):
+# the app additionally joins that network so Traefik can reach it.
+# Enabled by setup-vps.sh via COMPOSE_FILE=docker-compose.yml:docker-compose.traefik-net.yml in .env.
+services:
+  app:
+    networks:
+      - default
+      - traefik
+    labels:
+      - traefik.docker.network=${TRAEFIK_NETWORK}
+
+networks:
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK}

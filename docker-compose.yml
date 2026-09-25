@@ -1,5 +1,11 @@
-# Lernraum behind the existing Traefik of the n8n setup on the VPS.
+# Lernraum behind the Traefik that already runs on the VPS.
 # Values come from .env (created by scripts/setup-vps.sh).
+#
+# The app lives in its own network (lernraum_default). A Traefik in host network
+# mode reaches it there directly. If Traefik runs in its own Docker network
+# instead (e.g. the n8n template), setup-vps.sh sets
+# COMPOSE_FILE=docker-compose.yml:docker-compose.traefik-net.yml in .env so the
+# app also joins that network.
 name: lernraum
 
 services:
@@ -18,11 +24,9 @@ services:
     ports:
       # Only reachable from the VPS itself – for diagnostics (curl 127.0.0.1:3100/api/health).
       - "127.0.0.1:${LERNRAUM_LOCAL_PORT:-3100}:3000"
-    networks:
-      - traefik
     labels:
       - traefik.enable=true
-      - traefik.docker.network=${TRAEFIK_NETWORK}
+      - traefik.docker.network=lernraum_default
       - traefik.http.routers.lernraum.rule=Host(`${DOMAIN}`)
       - traefik.http.routers.lernraum.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
       - traefik.http.routers.lernraum.tls=true
@@ -31,8 +35,3 @@ services:
       - traefik.http.middlewares.lernraum-headers.headers.stsSeconds=31536000
       - traefik.http.middlewares.lernraum-headers.headers.stsIncludeSubdomains=true
       - traefik.http.services.lernraum.loadbalancer.server.port=3000
-
-networks:
-  traefik:
-    external: true
-    name: ${TRAEFIK_NETWORK}
