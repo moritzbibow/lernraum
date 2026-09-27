@@ -2,6 +2,7 @@ import { and, asc, eq, isNull } from 'drizzle-orm'
 import { getDb, type Tx } from '../db/client'
 import { pageRevisions, pages, questions, quizzes, type Topic } from '../db/schema'
 import { analyzeMarkdown } from '../content/markdown'
+import { findDiagramErrors } from '../content/mermaid-check'
 import { newId } from '../ids'
 import { slugify } from '../slug'
 import { normalizeForMatch, splitTitle } from '../text'
@@ -14,7 +15,7 @@ import {
   type NormalizedQuestion,
   type QuizInput,
 } from '../validation/content'
-import { NotFoundError } from './errors'
+import { NotFoundError, ValidationError } from './errors'
 import { addInboxItem } from './inbox'
 import { loadLibrary, pagePathLabel, pageUrl } from './library'
 import {
@@ -51,6 +52,26 @@ const MAX_REVISIONS = 20
  * The single entry point for content coming from Claude (REST and MCP).
  * Runs in one transaction: either everything is stored or nothing.
  */
+/**
+ * ingest() after checking the page's ```mermaid diagrams with mermaid's parser.
+ * The check is async, so it runs before the (synchronous) transaction.
+ * Used by the REST and MCP endpoints.
+ */
+export async function ingestChecked(raw: unknown, opts: { source?: 'claude' | 'manual'; now?: number } = {}): Promise<IngestResult> {
+  const input = parseOrThrow(ingestInput, raw, 'Ungültige Einspeisung.')
+  const content = input.page?.content_md ?? input.page?.content
+  if (content && (input.mode ?? 'upsert') === 'upsert') {
+    const errors = await findDiagramErrors(analyzeMarkdown(content).mermaid)
+    if (errors.length) {
+      throw new ValidationError(
+        'Diagramm fehlerhaft – bitte korrigieren und erneut einspeisen.',
+        errors.map((message) => ({ path: 'page.content_md', message })),
+      )
+    }
+  }
+  return ingest(raw, opts)
+}
+
 export function ingest(raw: unknown, opts: { source?: 'claude' | 'manual'; now?: number } = {}): IngestResult {
   const input = parseOrThrow(ingestInput, raw, 'Ungültige Einspeisung.')
   const source = opts.source ?? 'claude'

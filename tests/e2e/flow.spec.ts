@@ -39,3 +39,16 @@ test('short links survive moves', async ({ page, request }) => {
   await page.goto(`/p/${res.pageId}`)
   await expect(page).toHaveURL(res.url.replace(/^https?:\/\/[^/]+/, ''))
 })
+
+test('mindmap diagrams keep their levels and render as SVG', async ({ page, request }) => {
+  const title = unique('Bewegungsanalyse')
+  const mindmap = 'mindmap\n  root((Bewegungsanalyse))\n    Beobachtung von außen\n      situativ während der Handlung\n    Erfassen von Ursachen\n      Dynamik'
+  const res = await ingest(request, { subject: 'Sport', path: ['Sporttheorie'], page: { title, content_md: `## Methoden\n\n\`\`\`mermaid\n${mindmap}\n\`\`\`\n` } })
+  await login(page)
+  await page.goto(res.url.replace(/^https?:\/\/[^/]+/, ''))
+  const diagram = page.locator('.mermaid-block')
+  await expect(diagram).toHaveAttribute('data-state', 'done', { timeout: 30_000 })
+  await expect(diagram.locator('svg')).toBeVisible()
+  await expect(diagram).toContainText('Erfassen von Ursachen')
+  await expect(page.locator('body')).not.toContainText('Syntax error')
+})

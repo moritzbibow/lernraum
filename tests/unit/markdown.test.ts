@@ -50,6 +50,13 @@ describe('markdown pipeline', () => {
     expect(r.html).toContain('<div class="mermaid-block">graph TD; A-->B</div>')
   })
 
+  it('keeps the indentation of mermaid sources (mindmap levels)', () => {
+    const source = 'mindmap\n  root((Bewegungsanalyse))\n    Beobachtung von außen\n      situativ'
+    const r = renderMarkdown(`## Methoden\n\n\`\`\`mermaid\n${source}\n\`\`\`\n`)
+    expect(r.html).toContain(`<div class="mermaid-block">${source}</div>`)
+    expect(analyzeMarkdown(`\`\`\`mermaid\n${source}\n\`\`\``).mermaid).toEqual([source])
+  })
+
   it('sanitizes raw html and dangerous links', () => {
     const { html } = renderMarkdown('<script>alert(1)</script> <img src=x onerror=alert(1)> [x](javascript:alert(1))')
     expect(html).not.toContain('<script')

@@ -1,5 +1,5 @@
 import { absolute, json, readJson, withApi } from '@/lib/api'
-import { ingest } from '@/lib/services/ingest'
+import { ingestChecked } from '@/lib/services/ingest'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
  */
 export const POST = withApi(async (req) => {
   const body = await readJson(req)
-  const result = ingest(body, { source: 'claude' })
+  const result = await ingestChecked(body, { source: 'claude' })
   return json(
     {
       ...result,

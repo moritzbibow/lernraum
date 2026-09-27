@@ -245,8 +245,9 @@ svg {
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-/* Mono labels: 10.5px / .1em / uppercase */
-.label {
+/* Mono labels: 10.5px / .1em / uppercase. Not inside SVGs: mermaid uses class="label"
+   for its node labels (also while measuring them), :where keeps the specificity of .label. */
+.label:where(:not(svg *)) {
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   font-weight: 500;
   font-size: 10.5px;

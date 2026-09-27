@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   // Never bundle local data (dev databases, backups) into the server output.
   outputFileTracingExcludes: { '*': ['./data/**'] },
+  // Diagram check at ingest (lib/content/mermaid-check.ts): load mermaid natively on the
+  // server so it shares the DOMPurify instance the check prepares.
+  serverExternalPackages: ['mermaid', 'dompurify'],
   poweredByHeader: false,
   devIndicators: { position: 'bottom-right' },
   async headers() {

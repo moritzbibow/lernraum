@@ -319,14 +319,69 @@
 .prose .mermaid-block[data-state='done'] {
   color: inherit;
   white-space: normal;
-}
-.prose .mermaid-block[data-state='error'] {
-  color: var(--muted);
+  /* centred via auto margins, so a diagram wider than the block can still be scrolled to its left edge */
   justify-content: flex-start;
+}
+.prose .mermaid-block[data-state='done'] > svg {
+  margin-inline: auto;
+}
+/* Diagram that cannot be drawn: short note, source folded away */
+.prose .mermaid-block[data-state='error'] {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 6px;
+  min-height: 0;
+  padding: 16px 18px;
+  white-space: normal;
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--muted);
+}
+.prose .mermaid-fallback__label {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim-2);
+  line-height: 1.4;
+}
+.prose .mermaid-fallback__text {
+  margin: 0;
+  line-height: 1.55;
+}
+.prose .mermaid-block[data-state='error'] details {
+  margin-top: 4px;
+  font-size: 13px;
+}
+.prose .mermaid-block[data-state='error'] summary {
+  cursor: pointer;
+  color: var(--muted-2);
+  width: fit-content;
+}
+.prose .mermaid-block[data-state='error'] summary:hover {
+  color: var(--text);
+}
+.prose .mermaid-block[data-state='error'] pre {
+  margin: 10px 0 0;
+  white-space: pre;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-variant-ligatures: none;
+  font-size: 12px;
+  color: var(--text-2);
 }
 .prose .mermaid-block svg {
   max-width: 100%;
   height: auto;
+}
+/* Mindmap branches: thin neutral lines instead of mermaid's thick coloured ones */
+.prose .mermaid-block svg path.edge {
+  stroke: var(--dim-3) !important;
+  stroke-width: 2px !important;
+}
+.prose .mermaid-block svg path.edge-depth-0 {
+  stroke-width: 3px !important;
 }
 
 /* Footnotes */

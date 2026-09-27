@@ -35,7 +35,7 @@ type DirectiveNode = {
   data?: Record<string, unknown>
 }
 
-type FileData = { topics: Topic[]; subheadings: string[]; hasMermaid: boolean; hasMath: boolean }
+type FileData = { topics: Topic[]; subheadings: string[]; hasMermaid: boolean; mermaid: string[]; hasMath: boolean }
 
 function isDirective(node: unknown): node is DirectiveNode {
   const t = (node as { type?: string }).type
@@ -135,15 +135,21 @@ const remarkLernraum: Plugin<[], MdRoot> = () => (tree: MdRoot, file: VFile) => 
     node.children = children as never
   })
 
-  // 3. Mermaid diagrams are rendered in the browser.
-  let hasMermaid = false
+  // 3. Mermaid diagrams are rendered in the browser. The source goes in as a hast
+  //    text node: mdast text is run through trimLines on the way to hast, which
+  //    would strip the indentation that mindmaps use for their hierarchy.
+  const mermaid: string[] = []
   visit(tree, 'code', (node, index, parent) => {
     if (node.lang !== 'mermaid' || !parent || index === undefined) return
-    hasMermaid = true
+    mermaid.push(node.value)
     parent.children.splice(index, 1, {
       type: 'paragraph',
-      data: { hName: 'div', hProperties: { className: ['mermaid-block'] } },
-      children: [text(node.value)],
+      children: [],
+      data: {
+        hName: 'div',
+        hProperties: { className: ['mermaid-block'] },
+        hChildren: [{ type: 'text', value: node.value }],
+      },
     } as never)
   })
 
@@ -163,7 +169,8 @@ const remarkLernraum: Plugin<[], MdRoot> = () => (tree: MdRoot, file: VFile) => 
   const data = file.data as Partial<FileData>
   data.topics = slugTopics(h2)
   data.subheadings = h3
-  data.hasMermaid = hasMermaid
+  data.hasMermaid = mermaid.length > 0
+  data.mermaid = mermaid
   data.hasMath = hasMath
 }
 
@@ -279,14 +286,14 @@ export function renderMarkdown(markdown: string): RenderedContent {
   }
 }
 
-export type ContentAnalysis = { topics: Topic[]; wordCount: number }
+export type ContentAnalysis = { topics: Topic[]; wordCount: number; mermaid: string[] }
 
-/** Topics (from ## headings) and word count – computed at ingest time. */
+/** Topics (from ## headings), word count and ```mermaid sources – computed at ingest time. */
 export function analyzeMarkdown(markdown: string): ContentAnalysis {
   const tree = analyzer.parse(markdown)
   const file = { data: {} } as VFile
   // Run the transform synchronously on the parsed tree.
   const transformed = analyzer.runSync(tree, file as never) as MdRoot
   const data = (file.data ?? {}) as Partial<FileData>
-  return { topics: data.topics ?? [], wordCount: countWords(toString(transformed)) }
+  return { topics: data.topics ?? [], wordCount: countWords(toString(transformed)), mermaid: data.mermaid ?? [] }
 }

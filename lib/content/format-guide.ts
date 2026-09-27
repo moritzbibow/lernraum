@@ -40,6 +40,9 @@ Lernraum ist Moritz' persönliches Lerntool. Inhalte kommen ausschließlich übe
 - \`### Unterthema\`, Listen, **fett**, *kursiv*, Links, Zitate (\`>\`), Tabellen (GitHub-Stil), Fußnoten.
 - Formeln (KaTeX): inline \`$a^2 + b^2 = c^2$\`, abgesetzt mit \`$$ … $$\` auf eigenen Zeilen.
 - Diagramme: Codeblock mit \`\`\`mermaid (flowchart, timeline, mindmap, xychart-beta …).
+  - mindmap: Die Ebenen ergeben sich nur aus der Einrückung mit Leerzeichen; genau ein Wurzelknoten, z. B. \`root((Thema))\`.
+  - flowchart: Beschriftungen mit Sonderzeichen wie ( ) [ ] { } : ; # in Anführungszeichen setzen: \`A["Kraft (N)"]\`.
+  - Jedes Diagramm wird beim Einspeisen mit dem Mermaid-Parser geprüft; ein fehlerhaftes wird mit Fehlermeldung abgelehnt (dann korrigieren und erneut einspeisen).
 - Code: \`\`\`python usw.
 - Blöcke (auf eigenen Zeilen, mit \`:::\` schließen):
 ${blockLines}

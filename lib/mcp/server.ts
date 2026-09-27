@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { FORMAT_GUIDE, SERVER_INSTRUCTIONS } from '../content/format-guide'
 import { getPageForApi } from '../services/api-views'
 import { AppError } from '../services/errors'
-import { ingest, replaceQuiz } from '../services/ingest'
+import { ingest, ingestChecked, replaceQuiz } from '../services/ingest'
 import { outlineJson, outlineText } from '../services/outline'
 import { search } from '../services/search'
 import { buildTree } from '../services/tree'
@@ -90,7 +90,7 @@ export function createMcpServer(opts: { baseUrl: string }) {
     },
     async (args) => {
       try {
-        const result = ingest(
+        const result = await ingestChecked(
           {
             subject: args.subject,
             path: args.path,
