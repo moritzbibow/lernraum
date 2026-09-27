@@ -15,6 +15,12 @@ describe('softHyphenate', () => {
     expect(show(softHyphenate('Superkompensation', { jointsOnly: true }))).toBe('Superkompensation')
     expect(show(softHyphenate('Superkompensation'))).toContain('|')
   })
+
+  it('leaves words below minLength whole, so titles break at spaces', () => {
+    expect(show(softHyphenate('Bewegungsbeschreibung und Bewegungsanalyse', { jointsOnly: true, minLength: 18 }))).toBe(
+      'Bewegungs|beschreibung und Bewegungsanalyse',
+    )
+  })
 })
 
 describe('checkFreeText', () => {

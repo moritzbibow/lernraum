@@ -75,6 +75,11 @@
   display: flex;
   flex: 1;
   min-height: 0;
+  /* Article + topic column stay together on screens wider than the 1280 px design:
+     article padding + widest content (callouts, 640 + 38) + aside. */
+  width: 100%;
+  max-width: calc(56px + 678px + 56px + 278px);
+  margin-inline: auto;
 }
 .article {
   flex: 1;
@@ -123,6 +128,9 @@
   top: 63px;
   height: calc(100vh - 63px);
   height: calc(100dvh - 63px);
+  /* The quiz card sits at the foot of this column (design: 820 px frame minus the bar);
+     on taller screens it stays there instead of drifting to the bottom of the window. */
+  max-height: 757px;
   align-self: flex-start;
   overflow-y: auto;
 }
@@ -228,7 +236,13 @@
   display: flex;
   flex-direction: column;
   gap: 28px;
-  max-width: 900px;
+  /* Same column as the reading page (.body), so content lines up with its article. */
+  width: 100%;
+  max-width: calc(56px + 678px + 56px + 278px);
+  margin-inline: auto;
+}
+.folder > * {
+  max-width: 788px;
 }
 .folderHead {
   display: flex;

@@ -139,7 +139,8 @@ export function getPageViewById(pageId: string, lib: Library = loadLibrary()): P
   return {
     id: row.id,
     title: row.title,
-    heading: softHyphenate(row.heading || splitTitle(row.title).main, { jointsOnly: true }),
+    // Only words too long for a phone-width line get break points ("Bewegungs­beschreibung").
+    heading: softHyphenate(row.heading || splitTitle(row.title).main, { jointsOnly: true, minLength: 18 }),
     kicker: computeKicker(row, parentLabel && subject && parent ? `${subject.name} · ${parent.title}` : parentLabel),
     url: pageUrl(lib, pageId) ?? '/',
     contentMd: row.contentMd,
