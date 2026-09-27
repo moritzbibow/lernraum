@@ -69,6 +69,9 @@ test('drag & drop moves a page into another folder', async ({ page, request }) =
   const source = row(page, moved)
   const target = row(page, 'Ziel')
   await expect(source).toBeVisible()
+  // Other tests add rows above: centre the target so the drag stays clear of the
+  // viewport edges, where dnd-kit starts auto-scrolling the page.
+  await target.evaluate((el) => el.scrollIntoView({ block: 'center' }))
   const from = await source.boundingBox()
   const to = await target.boundingBox()
   await page.mouse.move(from!.x + from!.width / 2, from!.y + from!.height / 2)

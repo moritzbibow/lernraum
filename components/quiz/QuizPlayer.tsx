@@ -29,6 +29,8 @@ export function QuizPlayer({ quiz }: { quiz: QuizDetail }) {
   const [text, setText] = useState('')
   const [done, setDone] = useState(false)
   const [saved, setSaved] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  // Attempt before this round – the quiz prop already contains this round once it is saved.
+  const [previous, setPrevious] = useState(quiz.lastAttempt)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -124,6 +126,7 @@ export function QuizPlayer({ quiz }: { quiz: QuizDetail }) {
     setText('')
     setDone(false)
     setSaved('idle')
+    if (!isRetry) setPrevious(quiz.lastAttempt)
   }
 
   const kicker = quiz.trail.join(' › ')
@@ -160,7 +163,7 @@ export function QuizPlayer({ quiz }: { quiz: QuizDetail }) {
             </div>
             <p className={styles.scoreSub}>
               {pct} % richtig · {verdict(pct)}
-              {!round.isRetry && quiz.lastAttempt && ` Letztes Mal: ${quiz.lastAttempt.score} / ${quiz.lastAttempt.total}.`}
+              {!round.isRetry && previous && ` Letztes Mal: ${previous.score} / ${previous.total}.`}
               {saved === 'error' && ' (Ergebnis konnte nicht gespeichert werden.)'}
             </p>
             {wrong.length > 0 && (

@@ -23,6 +23,9 @@ test('play a quiz with the keyboard and see the result', async ({ page, request 
 
   await expect(page.getByText('2 / 3')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Falsche wiederholen (1)' })).toBeVisible()
+  // First attempt: no comparison – also after saving it has refreshed the page data.
+  await page.waitForLoadState('networkidle')
+  await expect(page.getByText(/Letztes Mal/)).toHaveCount(0)
 
   // The attempt is stored.
   await page.goto('/quizze')
