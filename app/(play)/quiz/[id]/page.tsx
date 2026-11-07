@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { QuizPlayer } from '@/components/quiz/QuizPlayer'
@@ -16,5 +17,6 @@ export default async function PlayQuizPage({ params }: Props) {
   if (!quiz) notFound()
   // Long German words in the 42px question get soft hyphens.
   const prepared = { ...quiz, questions: quiz.questions.map((q) => ({ ...q, prompt: softHyphenate(q.prompt, { jointsOnly: true }) })) }
-  return <QuizPlayer quiz={prepared} />
+  // New answer order on every visit; the player reshuffles on every restart.
+  return <QuizPlayer quiz={prepared} seed={randomInt(2 ** 31)} />
 }

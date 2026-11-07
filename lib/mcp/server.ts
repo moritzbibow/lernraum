@@ -143,7 +143,10 @@ export function createMcpServer(opts: { baseUrl: string }) {
       try {
         if (args.quiz_id) {
           const r = replaceQuiz(args.quiz_id, args.quiz, { source: 'claude' })
-          return text(`Quiz ersetzt (${r.questionCount} Fragen): ${abs(r.quizUrl)}`, { ...r, quizUrl: abs(r.quizUrl) })
+          return text(
+            [`Quiz ersetzt (${r.questionCount} Fragen): ${abs(r.quizUrl)}`, ...r.warnings.map((w) => `Hinweis: ${w}`)].join('\n'),
+            { ...r, quizUrl: abs(r.quizUrl) },
+          )
         }
         const r = ingest(
           {

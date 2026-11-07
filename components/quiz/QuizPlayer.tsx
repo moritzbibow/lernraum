@@ -5,13 +5,15 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { markQuizOpenedAction, recordAttemptAction } from '@/lib/actions/quiz'
 import { checkFreeText } from '@/lib/quiz-check'
+import { fisherYates, mulberry32 } from '@/lib/shuffle'
 import type { QuizDetail } from '@/lib/services/quizzes'
 import styles from './QuizPlayer.module.css'
 
-type Result = { correct: boolean; choice?: number; text?: string; overridden?: boolean }
+type Result = { correct: boolean; choiceId?: string; text?: string; overridden?: boolean }
 
 const TYPE_LABEL = { mc: 'Multiple Choice', tf: 'Wahr oder Falsch', text: 'Freitext' } as const
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+const NO_ANSWERS: QuizDetail['questions'][number]['answers'] = []
 
 function verdict(pct: number) {
   if (pct >= 90) return 'Stark!'
@@ -20,7 +22,8 @@ function verdict(pct: number) {
   return 'Da geht noch was. Einmal lesen, dann nochmal.'
 }
 
-export function QuizPlayer({ quiz }: { quiz: QuizDetail }) {
+/** `seed` comes from the server per request, so server and client shuffle the same way. */
+export function QuizPlayer({ quiz, seed: initialSeed }: { quiz: QuizDetail; seed: number }) {
   const router = useRouter()
   const all = useMemo(() => quiz.questions.map((_, i) => i), [quiz.questions])
   const [round, setRound] = useState<{ order: number[]; isRetry: boolean }>({ order: all, isRetry: false })
@@ -32,19 +35,28 @@ export function QuizPlayer({ quiz }: { quiz: QuizDetail }) {
   // Attempt before this round – the quiz prop already contains this round once it is saved.
   const [previous, setPrevious] = useState(quiz.lastAttempt)
   const inputRef = useRef<HTMLInputElement>(null)
+  // Multiple-choice answers in a new order for every run; Wahr/Falsch keeps its fixed order.
+  const [seed, setSeed] = useState(initialSeed)
+  const shown = useMemo(
+    () => quiz.questions.map((x, i) => (x.type === 'mc' ? fisherYates(x.answers, mulberry32(seed + i * 7919)) : x.answers)),
+    [quiz.questions, seed],
+  )
 
   useEffect(() => {
     markQuizOpenedAction(quiz.id).catch(() => {})
   }, [quiz.id])
 
   const q = quiz.questions[round.order[pos]]
+  const answers = q ? shown[round.order[pos]] : NO_ANSWERS
   const result = q ? results[q.id] : undefined
   const answered = Boolean(result)
 
   const answerChoice = useCallback(
-    (index: number) => {
-      if (!q || answered || q.type === 'text' || index >= q.answers.length) return
-      setResults((r) => ({ ...r, [q.id]: { correct: q.answers[index].correct, choice: index } }))
+    (answerId: string) => {
+      if (!q || answered || q.type === 'text') return
+      const chosen = q.answers.find((a) => a.id === answerId)
+      if (!chosen) return
+      setResults((r) => ({ ...r, [q.id]: { correct: chosen.correct, choiceId: chosen.id } }))
     },
     [q, answered],
   )
@@ -106,14 +118,14 @@ export function QuizPlayer({ quiz }: { quiz: QuizDetail }) {
       const letter = LETTERS.indexOf(e.key.toUpperCase())
       const digit = Number(e.key) - 1
       const index = letter >= 0 ? letter : Number.isInteger(digit) && digit >= 0 ? digit : -1
-      if (index >= 0) {
+      if (index >= 0 && index < answers.length) {
         e.preventDefault()
-        answerChoice(index)
+        answerChoice(answers[index].id)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [q, answered, done, next, answerChoice, router, quiz.page.url])
+  }, [q, answers, answered, done, next, answerChoice, router, quiz.page.url])
 
   const restart = (order: number[], isRetry: boolean) => {
     setResults((r) => {
@@ -126,6 +138,7 @@ export function QuizPlayer({ quiz }: { quiz: QuizDetail }) {
     setText('')
     setDone(false)
     setSaved('idle')
+    setSeed(Math.floor(Math.random() * 2 ** 31))
     if (!isRetry) setPrevious(quiz.lastAttempt)
   }
 
@@ -205,7 +218,6 @@ export function QuizPlayer({ quiz }: { quiz: QuizDetail }) {
   }
 
   // ------------------------------------------------------------ question
-  const choiceIndex = result?.choice
   return (
     <div className={styles.screen}>
       <Header kicker={kicker} title={quiz.title} closeUrl={quiz.page.url} counter={`${pos + 1} / ${round.order.length}`} />
@@ -219,8 +231,8 @@ export function QuizPlayer({ quiz }: { quiz: QuizDetail }) {
 
           {q.type !== 'text' ? (
             <div className={styles.answers} role="radiogroup" aria-label="Antworten">
-              {q.answers.map((a, i) => {
-                const isChoice = choiceIndex === i
+              {answers.map((a, i) => {
+                const isChoice = result?.choiceId === a.id
                 const state = !answered ? '' : a.correct ? styles.correct : isChoice ? styles.wrong : styles.dimmed
                 return (
                   <button
@@ -229,7 +241,7 @@ export function QuizPlayer({ quiz }: { quiz: QuizDetail }) {
                     role="radio"
                     aria-checked={isChoice}
                     className={`${styles.answer} ${state}`}
-                    onClick={() => answerChoice(i)}
+                    onClick={() => answerChoice(a.id)}
                     disabled={answered}
                   >
                     <span className={styles.letter}>{LETTERS[i]}</span>

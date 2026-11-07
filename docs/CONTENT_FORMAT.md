@@ -50,13 +50,24 @@ Lernraum ist Moritz' persönliches Lerntool. Inhalte kommen ausschließlich übe
 `quiz: { "title"?: "…", "questions": [ … ] }` – ohne `title` heißt das Quiz wie der Anzeigename der Seite; gleicher Titel ersetzt ein vorhandenes Quiz.
 
 - **Multiple Choice** – 2–8 Antworten, genau eine richtig:
-  `{ "type": "mc", "prompt": "Wann …?", "answers": [{ "text": "…", "correct": true }, { "text": "…" }], "explanation": "…", "topic": "Superkompensation" }`
+  `{ "type": "mc", "prompt": "Wann …?", "answers": [{ "text": "…" }, { "text": "…", "correct": true }, { "text": "…" }], "explanation": "…", "topic": "Superkompensation" }`
 - **Wahr/Falsch**:
   `{ "type": "tf", "prompt": "Regeneration ist Teil des Trainings.", "correct": true, "explanation": "…" }`
 - **Freitext** – eine oder mehrere akzeptierte Antworten (Groß-/Kleinschreibung und kleine Tippfehler werden toleriert):
   `{ "type": "text", "prompt": "Wie heißt …?", "correct": ["Superkompensation"] }`
 
 `topic` ist der Titel einer `##`-Überschrift der Seite – „Zur Seite →“ im Quiz springt dann genau dorthin.
+
+## Qualitätsregeln für Quizze
+
+- **Das Wesentliche abfragen:** Vor dem Schreiben der Fragen aus dem Inhalt herausarbeiten, was am Thema am Ende wirklich wichtig ist und was man mitnehmen sollte (Kernaussagen, Merke-Inhalte, Zusammenhänge, Ursache und Wirkung). Genau das abfragen – keine nebensächlichen Formalien oder bloß obligatorischen Daten.
+- **Schwierigkeit:** nicht zu einfach, gern etwas anspruchsvoller (etwa 7 von 10). Verständnis, Anwendung und Zusammenhänge prüfen statt bloßes Wiedererkennen von Begriffen.
+- **Position der richtigen Antwort:** gleichmäßig auf alle Positionen verteilen, nie bevorzugt an erster Stelle. Der Lernraum mischt die Antworten zusätzlich.
+- **Falsche Antworten:** ähnlich lang, genauso genau formuliert und plausibel – die richtige Antwort darf nicht an Länge oder Detailgrad erkennbar sein.
+- **Erklärungen:** den Inhalt nennen, nie eine Position („die zweite Antwort“, „B“) – die Reihenfolge ändert sich beim Spielen.
+- **Wahr/Falsch:** ausgewogen, etwa gleich viele wahre und falsche Aussagen.
+
+Beim Einspeisen prüft der Lernraum das Quiz und gibt Hinweise zurück, wenn die richtige Antwort auffällig oft an derselben Position steht, auffällig oft die längste ist oder eine Erklärung Positionen nennt.
 
 ## Beispiel
 
@@ -70,8 +81,8 @@ Lernraum ist Moritz' persönliches Lerntool. Inhalte kommen ausschließlich übe
   "quiz": {
     "title": "Ausdauer",
     "questions": [
-      { "type": "mc", "prompt": "Welche Methode trainiert die Grundlagenausdauer?", "answers": [{ "text": "Dauermethode", "correct": true }, { "text": "Wiederholungsmethode" }], "explanation": "Lange, gleichmäßige Belastung.", "topic": "Methoden" },
-      { "type": "tf", "prompt": "Aerob bedeutet „mit Sauerstoff“.", "correct": true, "topic": "Grundlagen" }
+      { "type": "mc", "prompt": "Welche Methode trainiert die Grundlagenausdauer?", "answers": [{ "text": "Wiederholungsmethode" }, { "text": "Intervallmethode" }, { "text": "Dauermethode", "correct": true }, { "text": "Wettkampfmethode" }], "explanation": "Die Dauermethode setzt auf lange, gleichmäßige Belastung ohne Pausen – genau das entwickelt die Grundlagenausdauer.", "topic": "Methoden" },
+      { "type": "tf", "prompt": "Bei aerober Energiebereitstellung entsteht vor allem Laktat.", "correct": false, "explanation": "Aerob wird mit Sauerstoff vollständig abgebaut; viel Laktat entsteht bei anaerober Belastung.", "topic": "Grundlagen" }
     ]
   }
 }

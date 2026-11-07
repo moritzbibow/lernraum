@@ -7,7 +7,11 @@ test('play a quiz with the keyboard and see the result', async ({ page, request 
   await page.goto(`/quiz/${res.quizId}`)
   await expect(page.getByText('Frage 1 · Multiple Choice')).toBeVisible()
 
-  await page.keyboard.press('b') // correct
+  // Answers are shuffled: press the letter of the correct answer where it is shown now.
+  const shown = await page.getByRole('radio').allTextContents()
+  const correctIndex = shown.findIndex((t) => t.includes('Im Hoch der Superkompensation'))
+  expect(correctIndex).toBeGreaterThanOrEqual(0)
+  await page.keyboard.press('abcdefgh'[correctIndex])
   await expect(page.getByText('RICHTIG', { exact: true })).toBeVisible()
   await expect(page.getByText('WARUM', { exact: true })).toBeVisible()
   await page.keyboard.press('Enter')
@@ -54,4 +58,25 @@ test('edit a quiz: change, save, discard', async ({ page, request }) => {
   await page.getByRole('button', { name: 'Verwerfen' }).click()
   await expect(page.getByRole('radio', { name: 'Multiple Choice' })).toHaveAttribute('aria-checked', 'true')
   await expect(page.getByText('UNGESPEICHERT')).toHaveCount(0)
+})
+
+test('multiple-choice answers come in a new order on each visit', async ({ page, request }) => {
+  const texts = ['Dauermethode', 'Intervallmethode', 'Wiederholungsmethode', 'Wettkampfmethode', 'Fahrtspiel', 'Kreistraining']
+  const res = await ingest(request, {
+    subject: 'Sport',
+    page: { title: unique('Mischseite'), content_md: '## A\n\nx' },
+    quiz: { questions: [{ type: 'mc', prompt: 'Welche Methode?', answers: texts.map((text, i) => ({ text, correct: i === 2 })) }] },
+  })
+  await login(page)
+  const orders = new Set<string>()
+  for (let i = 0; i < 6; i++) {
+    await page.goto(`/quiz/${res.quizId}`)
+    const shown = await page.getByRole('radio').allTextContents()
+    expect(shown).toHaveLength(6)
+    orders.add(shown.join('|'))
+  }
+  expect(orders.size).toBeGreaterThan(1)
+  // The answer is checked by id, wherever it is shown.
+  await page.getByRole('radio', { name: /Wiederholungsmethode/ }).click()
+  await expect(page.getByText('RICHTIG', { exact: true })).toBeVisible()
 })

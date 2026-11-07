@@ -17,6 +17,7 @@ import {
 } from '../validation/content'
 import { NotFoundError, ValidationError } from './errors'
 import { addInboxItem } from './inbox'
+import { quizQualityWarnings, shuffleAnswers } from './quiz-quality'
 import { loadLibrary, pagePathLabel, pageUrl } from './library'
 import {
   computeReadProgress,
@@ -314,9 +315,14 @@ function insertQuestions(tx: Tx, quizId: string, list: NormalizedQuestion[], top
   })
 }
 
+/** Normalizes Claude's questions, reports guessable patterns (in the order sent) and shuffles mc answers. */
+function prepareQuestions(input: QuizInput['questions']) {
+  const normalized = normalizeQuestions(input)
+  return { normalized: shuffleAnswers(normalized), warnings: quizQualityWarnings(normalized) }
+}
+
 function upsertQuiz(tx: Tx, pageId: string, quiz: QuizInput, source: 'claude' | 'manual', now: number) {
-  const warnings: string[] = []
-  const normalized = normalizeQuestions(quiz.questions)
+  const { normalized, warnings } = prepareQuestions(quiz.questions)
   const page = tx.select({ title: pages.title, topics: pages.topics }).from(pages).where(eq(pages.id, pageId)).get()
   if (!page) throw new NotFoundError()
   const title = quiz.title?.trim() || splitTitle(page.title).main
@@ -381,7 +387,7 @@ export function replaceQuiz(quizId: string, raw: unknown, opts: { source?: 'clau
       .get()
     if (!quiz) throw new NotFoundError('Quiz nicht gefunden.')
     const page = tx.select({ topics: pages.topics }).from(pages).where(eq(pages.id, quiz.pageId)).get()
-    const normalized = normalizeQuestions(input.questions)
+    const { normalized, warnings } = prepareQuestions(input.questions)
     tx.delete(questions).where(eq(questions.quizId, quizId)).run()
     insertQuestions(tx, quizId, normalized, page?.topics ?? [])
     tx.update(quizzes)
@@ -389,6 +395,6 @@ export function replaceQuiz(quizId: string, raw: unknown, opts: { source?: 'clau
       .where(eq(quizzes.id, quizId))
       .run()
     addInboxItem(tx, 'quiz', quizId, 'updated', now)
-    return { ok: true as const, quizId, questionCount: normalized.length, quizUrl: quizPlayUrl(quizId) }
+    return { ok: true as const, quizId, questionCount: normalized.length, quizUrl: quizPlayUrl(quizId), warnings }
   })
 }

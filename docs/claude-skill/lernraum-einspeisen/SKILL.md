@@ -16,7 +16,7 @@ Der Lernraum ist Moritz' persönliches Lerntool. Du bist die einzige Quelle für
    - Kernaussagen in `:::merke`, Begriffe in `:::definition`, Anwendungen in `:::beispiel`, Eselsbrücken in `:::tipp`, typische Fehler in `:::achtung`.
    - Tabellen für Gegenüberstellungen, KaTeX für Formeln (`$…$`, `$$…$$`), `mermaid` für Abläufe/Zeitleisten.
    - Selbsttests als `:::details[Lösung anzeigen]`.
-5. **Quiz bauen (8–12 Fragen):** alle Themen abdecken, Mischung aus `mc`, `tf` und `text`; plausible Falschantworten; jede Frage mit kurzer `explanation` (warum richtig) und `topic` (= exakter Titel des `##`-Themas).
+5. **Quiz bauen (8–12 Fragen):** alle Themen abdecken, Mischung aus `mc`, `tf` und `text`; plausible Falschantworten; jede Frage mit kurzer `explanation` (warum richtig) und `topic` (= exakter Titel des `##`-Themas). Vorher herausarbeiten, was am Thema wirklich wichtig ist und was man mitnehmen sollte, und genau das abfragen – keine Formalien oder Nebensächlichkeiten. Eher anspruchsvoll (etwa 7/10); richtige Antwort gleichmäßig auf alle Positionen verteilen; falsche Antworten ähnlich lang und plausibel; Erklärungen nie mit Positionsangaben; Wahr/Falsch ausgewogen. Hinweise (`warnings`) zur Quiz-Qualität beim nächsten Mal beherzigen.
 6. **Einspeisen:** `ingest_page` mit `subject`, `path`, `title` (Muster „Stunde 4 – Trainingsprinzipien“), optional `heading` und `date`, `content_md` und `quiz` – alles in einem Aufruf.
 7. **Antworten:** Link zur Seite nennen, kurz sagen wo sie liegt, wie viele Themen/Fragen, und Hinweise (`warnings`) weitergeben.
 
